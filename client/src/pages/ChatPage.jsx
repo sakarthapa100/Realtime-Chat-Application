@@ -1,31 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { ChatState } from '../context/ChatProvider';
+import MyChats from '../components/Authentication/miscellaneous/MyChats';
+import ChatBox from '../components/Authentication/miscellaneous/ChatBox';
+import SideDrawer from '../components/Authentication/miscellaneous/SideDrawer';
+import {Box } from '@chakra-ui/react'
 
 const ChatPage = () => {
-  const [ chats, setChats] = useState([]);
-  const fetchChats = async () => {
-    try {
-      const response = await axios.get('/api/chat');
-      setChats(response.data);
-    } catch (error) {
-      console.error('Error fetching chats:', error);
-    }
-  };
+ const {user} =  ChatState()
 
-  useEffect(() => {
-    fetchChats();
-  }, []);
-
-  return <div className='text-white'>
-   {
-    chats.map((chat)=> 
-    <div key={chat._id}> 
-      {chat.chatName}
+  return (
+    <div className='w-full text-white'>
+{
+  user && <SideDrawer />
+}
+<Box className='flex justify-between w-full p-4 ' >
+  { user && <MyChats /> }
+  { user && <ChatBox /> }
+</Box>
     </div>
-    )
-   }
-   
-  </div>;
+  )
 };
 
 export default ChatPage;

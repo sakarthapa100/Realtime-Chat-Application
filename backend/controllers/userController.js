@@ -1,6 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcrypt');
-const User = require('../models/userModel');
+const User = require('../models/userModel.js');
 const generateToken = require('../config/generateToken.js'); // Adjust the path as necessary
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -94,7 +94,8 @@ const keyword = req.query.search ? {
     { email: { $regex: req.query.search, $options: "i" } },
   ],
 } : {};
-}
+const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
+res.send({ users });
 
 })
 
