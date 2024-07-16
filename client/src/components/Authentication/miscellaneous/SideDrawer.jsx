@@ -1,50 +1,32 @@
-import { Box, useDisclosure, useToast } from '@chakra-ui/react';
-import { Tooltip } from '@chakra-ui/react';
-import { Text } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Box, useDisclosure, useToast, Text, Avatar, Menu, MenuButton, MenuList, MenuItem, Button, Flex, Drawer, DrawerBody, Input, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton, Spinner, Tooltip } from '@chakra-ui/react';
 import { BellIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import ProfileModal from './ProfileModal';
-import React, { useState } from 'react';
-import { Avatar } from '@chakra-ui/avatar';
-import { ChatState } from '../../../context/ChatProvider';
 import { useHistory } from 'react-router';
-import {
-  Drawer,
-  DrawerBody,
-  Input,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-} from '@chakra-ui/react';
-import {
-  Menu,
-  Button,
-  Flex,
-  MenuButton,
-  MenuList,
-  MenuItem,
-} from '@chakra-ui/react';
 import axios from 'axios';
 import ChatLoading from './ChatLoading';
 import UserListItem from '../UserAvatar/UserListItem';
-import {  Spinner } from '@chakra-ui/react';
+import { getSender } from '../../../config/ChatLogics';
+import { ChatState } from '../../../context/ChatProvider';
+
+import NotificationBadge from 'react-notification-badge';
+import {Effect} from 'react-notification-badge';
 
 const SideDrawer = () => {
   const [search, setSearch] = useState('');
-  const [searchResult, setSearchResult] = useState({ users: [] }); // Initialize searchResult with an object containing an empty users array
+  const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
-  const { user, setSelectedChat, chats, setChats   } = ChatState();
+  const { user, setSelectedChat, chats, setChats, notification, setNotification } = ChatState();
   const history = useHistory();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [users, setUsers] = useState([]);
+  const toast = useToast();
 
   const logoutHandler = () => {
     localStorage.removeItem('userInfo');
     history.push('/');
   };
 
-  const toast = useToast();
   const handleSearch = async () => {
     if (!search) {
       toast({
@@ -59,20 +41,17 @@ const SideDrawer = () => {
 
     try {
       setLoading(true);
-
       const config = {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
       };
-
       const { data } = await axios.get(`/api/users?search=${search}`, config);
-
       setLoading(false);
-      setSearchResult(data); // Update searchResult with the response data object
+      setSearchResult(data);
     } catch (error) {
       toast({
-        title: 'Error Occured!',
+        title: 'Error Occurred!',
         description: 'Failed to Load the Search Results',
         status: 'error',
         duration: 5000,
@@ -82,25 +61,22 @@ const SideDrawer = () => {
     }
   };
 
-  const accessChat = async(userId) => {
-    // Implement access to chat functionality
+  const accessChat = async (userId) => {
     try {
-      setLoadingChat(true)
-
-      const config={
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:`Bearer ${user.token}`
+      setLoadingChat(true);
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
         },
-      }
-      const {data} = await axios.post(`/api/chat`,{userId},config)
-    
-      if(!chats.find((c)=>c._id===data._id)) setChats([data, ...chats])
+      };
+      const { data } = await axios.post(`/api/chat`, { userId }, config);
 
+      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
 
-      setSelectedChat(data)
-      setLoadingChat(false)
-      onClose()
+      setSelectedChat(data);
+      setLoadingChat(false);
+      onClose();
     } catch (error) {
       toast({
         title: 'Error fetching the chat',
@@ -109,7 +85,7 @@ const SideDrawer = () => {
         duration: 5000,
         isClosable: true,
         position: 'bottom-left',
-      })
+      });
     }
   };
 
@@ -129,9 +105,27 @@ const SideDrawer = () => {
 
         <div>
           <Menu>
-            <MenuButton className='p-2'>
-              <BellIcon className='text-xl' />
+            <MenuButton className='p-1'>
+              <NotificationBadge count={notification.length} effect={Effect.SCALE} />
+              <BellIcon className='text-xl' m={1} />
             </MenuButton>
+            <MenuList pl={2}>
+              {notification && notification.length === 0 && 'No New Messages'}
+              {notification && notification.length > 0 &&
+                notification.map((notif) => (
+                  <MenuItem
+                    key={notif._id}
+                    onClick={() => {
+                      setSelectedChat(notif.chat);
+                      setNotification(notification.filter((n) => n !== notif));
+                    }}
+                  >
+                    {notif.chat.isGroupChat
+                      ? `New Message in ${notif.chat.chatName}`
+                      : `New Message from ${getSender(user, notif.chat.users)}`}
+                  </MenuItem>
+                ))}
+            </MenuList>
           </Menu>
           <Menu>
             <MenuButton
@@ -141,7 +135,7 @@ const SideDrawer = () => {
             >
               <Avatar size={'sm'} cursor='pointer' name={user.name} />
             </MenuButton>
-            <MenuList className=''>
+            <MenuList>
               <ProfileModal color={'black'} user={user}>
                 <MenuItem color={'black'}>Profile</MenuItem>
               </ProfileModal>
@@ -172,7 +166,7 @@ const SideDrawer = () => {
             {loading ? (
               <ChatLoading />
             ) : (
-              searchResult.users.map((user) => (
+              searchResult.map((user) => (
                 <UserListItem
                   key={user._id}
                   user={user}
@@ -180,8 +174,7 @@ const SideDrawer = () => {
                 />
               ))
             )}
-{loadingChat && <Spinner ml='auto' display='flex'/>}
-
+            {loadingChat && <Spinner ml='auto' display='flex' />}
           </DrawerBody>
         </DrawerContent>
       </Drawer>
