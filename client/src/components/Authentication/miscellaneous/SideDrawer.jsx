@@ -125,7 +125,7 @@ const SideDrawer = () => {
           </Button>
         </Tooltip>
 
-        <Text>Talk-A-Tive</Text>
+        <Text>Chat-Gram</Text>
 
         <div>
           <Menu>
