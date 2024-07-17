@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { ChatState } from '../context/ChatProvider';
-import { IconButton, Spinner, useToast } from '@chakra-ui/react';
+import React, { useEffect, useState } from "react";
+import { ChatState } from "../context/ChatProvider";
+import { IconButton, Spinner, useToast } from "@chakra-ui/react";
 import { FormControl, Input } from "@chakra-ui/react";
 import { Box, Text } from "@chakra-ui/layout";
-import axios from 'axios';
-import { ArrowBackIcon } from '@chakra-ui/icons';
-import { getSender, getSenderFull } from '../config/ChatLogics';
-import ProfileModal from '../components/Authentication/miscellaneous/ProfileModal';
-import UpdateGroupChatModel from '../components/Authentication/miscellaneous/UpdateGroupChatModel';
-import ScrollableChat from './ScrollableChat';
-import io from 'socket.io-client';
+import axios from "axios";
+import { ArrowBackIcon } from "@chakra-ui/icons";
+import { getSender, getSenderFull } from "../config/ChatLogics";
+import ProfileModal from "./Authentication/miscellaneous/ProfileModal";
+import UpdateGroupChatModel from "./Authentication/miscellaneous/UpdateGroupChatModel";
+import ScrollableChat from "./ScrollableChat";
+import io from "socket.io-client";
 
 const ENDPOINT = "http://localhost:5000";
 let socket, selectedChatCompare;
@@ -23,7 +23,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [isTyping, setIsTyping] = useState(false);
 
   const toast = useToast();
-  const { user, selectedChat, setSelectedChat, notification, setNotification } = ChatState();
+  const { user, selectedChat, setSelectedChat, notification, setNotification } =
+    ChatState();
 
   const fetchMessages = async () => {
     if (!selectedChat) return;
@@ -35,12 +36,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         },
       };
       setLoading(true);
-      const { data } = await axios.get(`/api/message/${selectedChat._id}`, config);
+      const { data } = await axios.get(
+        `/api/message/${selectedChat._id}`,
+        config
+      );
       setMessages(data);
       setLoading(false);
 
       if (socketConnected) {
-        socket.emit('join chat', selectedChat._id);
+        socket.emit("join chat", selectedChat._id);
       }
     } catch (error) {
       toast({
@@ -57,9 +61,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   useEffect(() => {
     socket = io(ENDPOINT);
     socket.emit("setup", user);
-    socket.on('connected', () => setSocketConnected(true));
-    socket.on('typing', () => setIsTyping(true));
-    socket.on('stop typing', () => setIsTyping(false));
+    socket.on("connected", () => setSocketConnected(true));
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
 
     return () => {
       socket.disconnect();
@@ -77,8 +81,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     if (!socket) return;
 
     socket.on("message received", (newMessageReceived) => {
-      if (!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
-        if (Array.isArray(notification) && !notification.includes(newMessageReceived)) {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMessageReceived.chat._id
+      ) {
+        if (
+          Array.isArray(notification) &&
+          !notification.includes(newMessageReceived)
+        ) {
           setNotification([newMessageReceived, ...notification]);
           setFetchAgain(!fetchAgain);
         }
@@ -113,11 +123,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           },
         };
         setNewMessage("");
-        const { data } = await axios.post("/api/message", {
-          content: newMessage,
-          chatId: selectedChat._id,
-        }, config);
-        socket.emit("new message", { ...data, chat: selectedChat });  // Include the full chat object
+        const { data } = await axios.post(
+          "/api/message",
+          {
+            content: newMessage,
+            chatId: selectedChat._id,
+          },
+          config
+        );
+        socket.emit("new message", { ...data, chat: selectedChat }); // Include the full chat object
         setMessages((prevMessages) => [...prevMessages, data]);
       } catch (error) {
         toast({
@@ -178,7 +192,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             ) : (
               <>
                 <Text>{selectedChat.chatName.toUpperCase()}</Text>
-                <UpdateGroupChatModel fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} fetchMessages={fetchMessages} />
+                <UpdateGroupChatModel
+                  fetchAgain={fetchAgain}
+                  setFetchAgain={setFetchAgain}
+                  fetchMessages={fetchMessages}
+                />
               </>
             )}
           </Text>
@@ -202,7 +220,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 margin="auto"
               />
             ) : (
-              <div className='flex flex-col overflow-y-scroll'>
+              <div className="flex flex-col overflow-y-scroll">
                 <ScrollableChat messages={messages} />
               </div>
             )}
@@ -219,7 +237,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           </Box>
         </>
       ) : (
-        <Box display="flex" alignItems="center" justifyContent="center" h="100%">
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          h="100%"
+        >
           <Text fontSize="3xl" pb={3} fontFamily="Work sans">
             No chat is selected
           </Text>

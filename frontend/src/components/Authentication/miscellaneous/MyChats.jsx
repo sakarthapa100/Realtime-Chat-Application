@@ -12,6 +12,8 @@ const MyChats = ({ width, fetchAgain }) => {
   const toast = useToast();
 
   const fetchChats = async () => {
+    if (!user) return; // Ensure user is defined before making the request
+
     try {
       const config = {
         headers: {
